@@ -43,10 +43,9 @@ export default function WorkflowJobs({ jobs }: WorkflowJobsProps) {
   const scheduledJobs = jobs.filter(job => job.state_type === 'SCHEDULED' || job.state_type === 'PENDING').length;
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="p-6">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Workflow Jobs</h1>
           <p className="text-muted-foreground">
             Monitor and manage your Prefect workflow executions
           </p>
