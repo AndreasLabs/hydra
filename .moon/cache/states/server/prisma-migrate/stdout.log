@@ -1,0 +1,33 @@
+[2mEnvironment variables loaded from .env[22m
+[2mPrisma schema loaded from prisma/schema.prisma[22m
+[2mDatasource "db": PostgreSQL database "skystore", schema "public" at "localhost:4152"[22m
+
+Applying migration `20250228043323_init`
+Applying migration `20250228075929_init`
+Applying migration `20250228081129_add_user_auth`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20250228043323_[36m[1minit[22m[39m/
+    └─ migration.sql
+  └─ 20250228075929_[36m[1minit[22m[39m/
+    └─ migration.sql
+  └─ 20250228081129_[36m[1madd_user_auth[22m[39m/
+    └─ migration.sql
+[2K[1G[36m?[39m [1mEnter a name for the new migration:[22m [90m›[39m 78[2K[1G[2K[1G[32m✔[39m [1mEnter a name for the new migration:[22m [90m…[39m 78
+[?25hApplying migration `20250324061343_`
+
+
+The following migration(s) have been created and applied from new schema changes:
+
+migrations/
+  └─ 20250324061343_[36m[1m[22m[39m/
+    └─ migration.sql
+
+[32mYour database is now in sync with your schema.[39m
+
+Running generate... [2m(Use --skip-generate to skip the generators)[22m
+[2K[1A[2K[GRunning generate... - Prisma Client
+[2K[1A[2K[G✔ Generated [1mPrisma Client[22m (v6.4.1)[2m to ./../node_modules/@prisma/client[22m in 57ms
+

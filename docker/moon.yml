@@ -1,0 +1,122 @@
+$schema: 'https://moonrepo.dev/schemas/tasks.json'
+
+language: "docker-compose"
+type: 'application'
+tags:
+- 'docker-compose'
+
+project:
+  name: "compose-full"
+  description: 'Docker Compose for cursed (full)'
+
+tasks:
+  postgres:
+    command: 'docker compose -f @in(0) up -d postgres'
+    description: 'Start the postgres container'
+    #  toolchain: 'system'
+    options:
+      outputStyle: 'stream'
+      runFromWorkspaceRoot: true
+      cache: false
+    inputs:
+    - '@files(docker-compose)'
+
+  nodeodm:
+    command: 'docker compose -f @in(0) up -d nodeodm'
+    description: 'Start the nodeodm container'
+    # toolchain: 'system'
+    options:
+      outputStyle: 'stream'
+      runFromWorkspaceRoot: true
+      cache: false
+    inputs:
+    - '@files(docker-compose)'
+
+  app:
+    command: 'docker compose -f @in(0) up -d app'
+    description: 'Start the app container'
+    # toolchain: 'system'
+    options:
+      outputStyle: 'stream'
+      runFromWorkspaceRoot: true
+      cache: false
+    inputs:
+    - '@files(docker-compose)'
+
+  web:
+    command: 'docker compose -f @in(0) up -d web'
+    description: 'Start the web container'
+    #  toolchain: 'system'
+    options:
+      outputStyle: 'stream'
+      runFromWorkspaceRoot: true
+      cache: false
+    inputs:
+    - '@files(docker-compose)'
+
+  redis:
+    command: 'docker compose -f @in(0) up -d redis'
+    description: 'Start the redis container'
+    # toolchain: 'system'
+    options:
+      outputStyle: 'stream'
+      runFromWorkspaceRoot: true
+      cache: false
+    inputs:
+    - '@files(docker-compose)'
+
+  minio:
+    command: 'docker compose -f @in(0) up -d minio'
+    description: 'Start the minio container'
+    #toolchain: 'system'
+    options:
+      outputStyle: 'stream'
+    inputs:
+    - '@files(docker-compose)'
+
+  otel-collector:
+    command: 'docker compose -f @in(0) up -d otel-collector'
+    description: 'Start the otel-collector container'
+    # toolchain: 'system'
+    options:
+      outputStyle: 'stream'
+      runFromWorkspaceRoot: true
+      cache: false
+    inputs:
+    - '@files(docker-compose)'
+
+  clickhouse:
+    command: 'docker compose -f @in(0) up -d clickhouse'
+    description: 'Start the clickhouse container'
+    toolchain: 'system'
+    options:
+      outputStyle: 'stream'
+    inputs:
+    - '@files(docker-compose)'
+
+  query-service:
+    command: 'docker compose -f @in(0) up -d query-service'
+    description: 'Start the query-service container'
+    toolchain: 'system'
+    options:
+      outputStyle: 'stream'
+    inputs:
+    - '@files(docker-compose)'
+
+  frontend:
+    command: 'docker compose -f @in(0) up -d frontend'
+    description: 'Start the frontend container'
+    toolchain: 'system'
+    options:
+      outputStyle: 'stream'
+    inputs:
+    - '@files(docker-compose)'
+
+  prefect:
+    command: 'docker compose -f @in(0) up -d prefect'
+    description: 'Start the prefect container'
+    toolchain: 'system'
+    options:
+      outputStyle: 'stream'
+    inputs:
+    - '@files(docker-compose)'

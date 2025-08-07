@@ -1,0 +1,12 @@
+language: "typescript"
+
+project:
+  name: 'hydra-hub'
+  description: 'Hydra Hub'
+  metadata:
+    tag: 'hydra-hub'
+
+tags:
+- 'next'
+- 'prisma'
+- 'docker'

@@ -1,0 +1,2 @@
+time="2025-02-13T23:05:27-08:00" level=warning msg="/Users/alex/repos/andreas/SkyStore/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+ Container skystore-redis-1  Running

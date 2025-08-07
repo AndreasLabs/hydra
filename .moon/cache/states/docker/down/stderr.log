@@ -1,0 +1,1 @@
+time="2025-02-13T23:04:08-08:00" level=warning msg="/Users/alex/repos/andreas/SkyStore/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
