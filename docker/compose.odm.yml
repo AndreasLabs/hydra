@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  nodeodm:
+    image: opendronemap/nodeodm
+    ports:
+      - "3000:3000"
+    volumes:
+      - odm_data:/var/www/data
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/info"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Uncomment this section to use GPU acceleration (requires NVIDIA GPU)
+  # nodeodm-gpu:
+  #   image: opendronemap/nodeodm:gpu
+  #   ports:
+  #     - "3001:3000"
+  #   volumes:
+  #     - odm_data_gpu:/var/www/data
+  #   restart: unless-stopped
+  #   environment:
+  #     - NODE_ENV=production
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+
+volumes:
+  odm_data:
+    driver: local
+  # odm_data_gpu:
+  #   driver: local

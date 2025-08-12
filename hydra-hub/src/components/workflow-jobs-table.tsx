@@ -1,4 +1,10 @@
-import { FlowRun } from '@/types/workflow-job';
+import type { FlowRun } from '@/lib/prefect/client';
+
+// Enhanced job data with flow info and latest log
+interface EnhancedFlowRun extends FlowRun {
+  flowName?: string;
+  latestLogMessage?: string;
+}
 import {
   Table,
   TableBody,
@@ -9,10 +15,12 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Play, Square, RotateCcw, Loader2, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Play, Square, RotateCcw, Loader2, Clock, CheckCircle, XCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
+import { EmptyState, LoadingState } from '@/components/feedback';
 
 interface WorkflowJobsTableProps {
-  data: FlowRun[];
+  data: EnhancedFlowRun[];
   loading: boolean;
   onRetry?: (id: string) => void;
   onCancel?: (id: string) => void;
@@ -89,25 +97,15 @@ export function WorkflowJobsTable({ data, loading, onRetry, onCancel }: Workflow
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin" />
-        <span className="ml-2">Loading workflow jobs...</span>
-      </div>
-    );
-  }
+  if (loading) return <LoadingState label="Loading workflow jobs..." />
 
-  if (data.length === 0) {
+  if (data.length === 0)
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">No workflow jobs found.</p>
-        <p className="text-sm text-muted-foreground mt-2">
-          Jobs will appear here once your Prefect flows start running.
-        </p>
-      </div>
-    );
-  }
+      <EmptyState
+        title="No workflow jobs found"
+        description="Jobs will appear here once your Prefect flows start running."
+      />
+    )
 
   return (
     <div className="rounded-md border bg-card">
@@ -115,8 +113,8 @@ export function WorkflowJobsTable({ data, loading, onRetry, onCancel }: Workflow
         <TableHeader>
           <TableRow>
             <TableHead>Status</TableHead>
-            <TableHead>Job Name</TableHead>
-            <TableHead>Flow ID</TableHead>
+            <TableHead>Job Name & Flow</TableHead>
+            <TableHead>Latest Log</TableHead>
             <TableHead>Work Queue</TableHead>
             <TableHead>Start Time</TableHead>
             <TableHead>Duration</TableHead>
@@ -125,73 +123,104 @@ export function WorkflowJobsTable({ data, loading, onRetry, onCancel }: Workflow
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.map((job) => (
-            <TableRow key={job.id}>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  {getStateIcon(job.state_type)}
-                  {getStateBadge(job.state_type)}
-                </div>
-              </TableCell>
-              <TableCell className="font-medium max-w-[200px] truncate">
-                {job.name}
-              </TableCell>
-              <TableCell className="font-mono text-xs">
-                {job.flow_id.substring(0, 8)}...
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline">{job.work_queue_name || 'default'}</Badge>
-              </TableCell>
-              <TableCell className="text-sm text-muted-foreground">
-                {formatDate(job.start_time)}
-              </TableCell>
-              <TableCell className="text-sm">
-                {formatDuration(job.total_run_time)}
-              </TableCell>
-              <TableCell>
-                <div className="flex flex-wrap gap-1">
-                  {job.tags.slice(0, 2).map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                  {job.tags.length > 2 && (
-                    <Badge variant="secondary" className="text-xs">
-                      +{job.tags.length - 2}
-                    </Badge>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-2">
-                  {job.state_type === 'FAILED' && onRetry && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onRetry(job.id)}
-                      className="h-8 w-8 p-0"
-                      title="Retry job"
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                      <span className="sr-only">Retry</span>
-                    </Button>
-                  )}
-                  {(job.state_type === 'RUNNING' || job.state_type === 'SCHEDULED') && onCancel && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onCancel(job.id)}
-                      className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                      title="Cancel job"
-                    >
-                      <Square className="h-4 w-4" />
-                      <span className="sr-only">Cancel</span>
-                    </Button>
-                  )}
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+          {data.map((job) => {
+            const state = (job.state_type ?? 'UNKNOWN').toUpperCase();
+            const flowId = job.flow_id ?? '';
+            const tags = job.tags ?? [];
+            const totalRunTime = job.total_run_time ?? 0;
+            const startTime: string | null = job.start_time ?? null;
+            return (
+              <TableRow key={job.id}>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    {getStateIcon(state)}
+                    {getStateBadge(state)}
+                  </div>
+                </TableCell>
+                <TableCell className="max-w-[250px]">
+                  <div className="space-y-1">
+                    <Link href={`/workflow-jobs/${job.id}`} className="hover:underline text-primary font-medium block truncate">
+                      {job.name ?? 'Unnamed Job'}
+                    </Link>
+                    <div className="text-xs text-muted-foreground truncate">
+                      Flow: {job.flowName ?? (flowId ? `${flowId.substring(0, 12)}...` : 'Unknown')}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="max-w-[300px]">
+                  <div className="text-sm text-muted-foreground truncate">
+                    {job.latestLogMessage ? (
+                      <span className="font-mono text-xs">{job.latestLogMessage}</span>
+                    ) : (
+                      <span className="italic">No logs available</span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline">{job.work_queue_name || 'default'}</Badge>
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {formatDate(startTime)}
+                </TableCell>
+                <TableCell className="text-sm">
+                  {formatDuration(totalRunTime)}
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-1">
+                    {tags.slice(0, 2).map((tag) => (
+                      <Badge key={tag} variant="secondary" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                    {tags.length > 2 && (
+                      <Badge variant="secondary" className="text-xs">
+                        +{tags.length - 2}
+                      </Badge>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <Link href={`/workflow-jobs/${job.id}`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        title="View details"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        <span className="sr-only">View details</span>
+                      </Button>
+                    </Link>
+                    {state === 'FAILED' && onRetry && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onRetry(job.id)}
+                        className="h-8 w-8 p-0"
+                        title="Retry job"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                        <span className="sr-only">Retry</span>
+                      </Button>
+                    )}
+                    {(state === 'RUNNING' || state === 'SCHEDULED') && onCancel && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onCancel(job.id)}
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        title="Cancel job"
+                      >
+                        <Square className="h-4 w-4" />
+                        <span className="sr-only">Cancel</span>
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

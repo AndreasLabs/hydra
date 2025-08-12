@@ -2,13 +2,15 @@ import { useState } from 'react';
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 
-import { DataAsset } from '@/types/data-asset';
+import { DataAsset } from '../../generated/prisma';
 import { DataAssetsTable } from '@/components/data-assets-table';
 import { DataAssetDialog } from '@/components/data-asset-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Database } from 'lucide-react';
-import { db } from '@/lib/db';
+import { PageHeader } from '@/components/page-header';
+import { StatCard } from '@/components/stat-card';
+import { fetchDataAssets } from '@/lib/data-assets/queries';
 
 interface DashboardProps {
   dataAssets: DataAsset[];
@@ -65,61 +67,22 @@ export default function Dashboard({ dataAssets }: DashboardProps) {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <p className="text-muted-foreground">
-            Manage your data assets and storage configurations
-          </p>
-        </div>
-        <Button onClick={handleCreate} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Add Data Asset
-        </Button>
-      </div>
+      <PageHeader
+        title="Data Assets"
+        description="Manage your data assets and storage configurations"
+        right={(
+          <Button onClick={handleCreate} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Add Data Asset
+          </Button>
+        )}
+      />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Assets</CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{dataAssets.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Object Storage</CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {dataAssets.filter(asset => asset.storage_type === 'OBJECT').length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Table Storage</CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {dataAssets.filter(asset => asset.storage_type === 'TABLE').length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Asset Types</CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {new Set(dataAssets.map(asset => asset.asset_type)).size}
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard title="Total Assets" value={dataAssets.length} icon={<Database className="h-4 w-4 text-muted-foreground" />} />
+        <StatCard title="Object Storage" value={dataAssets.filter(asset => asset.storage_type === 'OBJECT').length} icon={<Database className="h-4 w-4 text-muted-foreground" />} />
+        <StatCard title="Table Storage" value={dataAssets.filter(asset => asset.storage_type === 'TABLE').length} icon={<Database className="h-4 w-4 text-muted-foreground" />} />
+        <StatCard title="Asset Types" value={new Set(dataAssets.map(asset => asset.asset_type)).size} icon={<Database className="h-4 w-4 text-muted-foreground" />} />
       </div>
 
       <Card>
@@ -151,11 +114,7 @@ export default function Dashboard({ dataAssets }: DashboardProps) {
 
 export const getServerSideProps: GetServerSideProps = async () => {
   try {
-    const dataAssets = await db.dataAsset.findMany({
-      orderBy: {
-        date_created: 'desc'
-      }
-    });
+      const dataAssets = await fetchDataAssets();
 
     // Convert dates to strings for JSON serialization
     const serializedDataAssets = dataAssets.map(asset => ({

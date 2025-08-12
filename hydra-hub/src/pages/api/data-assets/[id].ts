@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { fetchDataAssetById, updateDataAsset, deleteDataAsset } from '@/lib/queries/data-assets';
 import { StorageType } from '../../../../generated/prisma';
+import { fetchDataAssetById as getDataAssetById, updateDataAsset, deleteDataAsset } from '@/lib/data-assets/queries';
 
 export default async function handler(
   req: NextApiRequest,
@@ -15,7 +15,7 @@ export default async function handler(
   try {
     switch (req.method) {
       case 'GET':
-        const dataAsset = await fetchDataAssetById(id);
+        const dataAsset = await getDataAssetById(id);
         if (!dataAsset) {
           return res.status(404).json({ error: 'Data asset not found' });
         }
@@ -23,7 +23,7 @@ export default async function handler(
         break;
 
       case 'PUT':
-        const existingAsset = await fetchDataAssetById(id);
+        const existingAsset = await getDataAssetById(id);
         if (!existingAsset) {
           return res.status(404).json({ error: 'Data asset not found' });
         }
@@ -47,7 +47,7 @@ export default async function handler(
         break;
 
       case 'DELETE':
-        const assetToDelete = await fetchDataAssetById(id);
+        const assetToDelete = await getDataAssetById(id);
         if (!assetToDelete) {
           return res.status(404).json({ error: 'Data asset not found' });
         }

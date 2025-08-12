@@ -1,41 +1,98 @@
 import { useState } from 'react';
-import { GetServerSideProps } from 'next';
-import { useRouter } from 'next/router';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { FlowRun } from '@/types/workflow-job';
+import type { FlowRun, Flow, LogEntry } from '@/lib/prefect/client';
+import { prefectClient } from '@/lib/prefect/client';
 import { WorkflowJobsTable } from '@/components/workflow-jobs-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RefreshCw, Play, Clock, CheckCircle, XCircle, BarChart3 } from 'lucide-react';
+import { PageHeader } from '@/components/page-header';
+import { StatCard } from '@/components/stat-card';
 
-interface WorkflowJobsProps {
-  jobs: FlowRun[];
+// Enhanced job data with flow info and latest log
+export interface EnhancedFlowRun extends FlowRun {
+  flowName?: string;
+  latestLogMessage?: string;
 }
 
-export default function WorkflowJobs({ jobs }: WorkflowJobsProps) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+export default function WorkflowJobs() {
+  const [refreshing, setRefreshing] = useState(false);
+  const queryClient = useQueryClient();
 
-  const refreshData = () => {
-    setLoading(true);
-    router.replace(router.asPath).finally(() => setLoading(false));
+  // Fetch flow runs with React Query - auto-refetch every 3 seconds
+  const { data: flowRuns, isLoading: flowRunsLoading, refetch } = useQuery({
+    queryKey: ['flowRuns'],
+    queryFn: () => prefectClient.flowRuns.filter({ limit: 50, sort: 'START_TIME_DESC' }),
+    refetchInterval: 3000, // 3 seconds
+    refetchIntervalInBackground: true,
+  });
+
+  // Fetch enhanced data (flows and latest logs) for the flow runs
+  const { data: enhancedJobs, isLoading: enhancedLoading } = useQuery({
+    queryKey: ['enhancedFlowRuns', flowRuns],
+    queryFn: async (): Promise<EnhancedFlowRun[]> => {
+      if (!flowRuns || flowRuns.length === 0) return [];
+      
+      // Get unique flow IDs
+      const uniqueFlowIds = [...new Set(flowRuns.map(run => run.flow_id).filter(Boolean))];
+      
+      // Fetch all flows in parallel
+      const flowsPromises = uniqueFlowIds.map(flowId => 
+        prefectClient.flows.get(flowId!).catch(() => null)
+      );
+      const flows = await Promise.all(flowsPromises);
+      const flowsMap = new Map<string, Flow>();
+      flows.forEach((flow, index) => {
+        if (flow && uniqueFlowIds[index]) flowsMap.set(uniqueFlowIds[index], flow);
+      });
+
+      // Fetch latest logs for each flow run in parallel
+      const latestLogsPromises = flowRuns.map(run => 
+        prefectClient.flowRuns.getLatestLog(run.id).catch(() => null)
+      );
+      const latestLogs = await Promise.all(latestLogsPromises);
+
+      // Combine data
+      return flowRuns.map((run, index): EnhancedFlowRun => ({
+        ...run,
+        flowName: run.flow_id ? flowsMap.get(run.flow_id)?.name : undefined,
+        latestLogMessage: latestLogs[index]?.message,
+      }));
+    },
+    enabled: !!flowRuns && flowRuns.length > 0,
+    refetchInterval: 10000, // Refetch enhanced data every 10 seconds (less frequent)
+  });
+
+  const isLoading = flowRunsLoading || enhancedLoading;
+  const jobsData = enhancedJobs || flowRuns;
+
+  // Cancel flow run mutation
+  const cancelMutation = useMutation({
+    mutationFn: (flowRunId: string) => prefectClient.flowRuns.cancel(flowRunId),
+    onSuccess: () => {
+      // Invalidate and refetch flow runs after successful cancel
+      queryClient.invalidateQueries({ queryKey: ['flowRuns'] });
+    },
+  });
+
+  const refreshData = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
   };
 
-  const handleRetry = async (id: string) => {
-    // In a real implementation, this would call the Prefect API to retry the flow run
-    console.log('Retrying job:', id);
-    // For now, just refresh the data
-    refreshData();
+  const handleRetry = async (_id: string) => {
+    // TODO: implement retry via deployment create_flow_run if desired
+    await refreshData();
   };
 
   const handleCancel = async (id: string) => {
-    // In a real implementation, this would call the Prefect API to cancel the flow run
-    console.log('Cancelling job:', id);
-    // For now, just refresh the data
-    refreshData();
+    await cancelMutation.mutateAsync(id);
   };
 
   // Calculate statistics
+  const jobs: EnhancedFlowRun[] = jobsData ?? [];
   const totalJobs = jobs.length;
   const runningJobs = jobs.filter(job => job.state_type === 'RUNNING').length;
   const completedJobs = jobs.filter(job => job.state_type === 'COMPLETED').length;
@@ -44,76 +101,25 @@ export default function WorkflowJobs({ jobs }: WorkflowJobsProps) {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <p className="text-muted-foreground">
-            Monitor and manage your Prefect workflow executions
-          </p>
-        </div>
-        <Button 
-          onClick={refreshData} 
-          disabled={loading}
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
-      </div>
+      <PageHeader
+        title="Workflow Jobs"
+        description="Monitor and manage your Prefect workflow executions"
+        right={(
+          <Button onClick={refreshData} disabled={refreshing || isLoading} className="flex items-center gap-2">
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        )}
+      />
 
-      {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Jobs</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalJobs}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Running</CardTitle>
-            <Play className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{runningJobs}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{completedJobs}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Failed</CardTitle>
-            <XCircle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{failedJobs}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Scheduled</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{scheduledJobs}</div>
-          </CardContent>
-        </Card>
+        <StatCard title="Total Jobs" value={totalJobs} icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />} />
+        <StatCard title="Running" value={<span className="text-blue-600">{runningJobs}</span>} icon={<Play className="h-4 w-4 text-blue-500" />} />
+        <StatCard title="Completed" value={<span className="text-green-600">{completedJobs}</span>} icon={<CheckCircle className="h-4 w-4 text-green-500" />} />
+        <StatCard title="Failed" value={<span className="text-red-600">{failedJobs}</span>} icon={<XCircle className="h-4 w-4 text-red-500" />} />
+        <StatCard title="Scheduled" value={<span className="text-yellow-600">{scheduledJobs}</span>} icon={<Clock className="h-4 w-4 text-yellow-500" />} />
       </div>
 
-      {/* Jobs Table */}
       <Card>
         <CardHeader>
           <CardTitle>Recent Workflow Jobs</CardTitle>
@@ -124,7 +130,7 @@ export default function WorkflowJobs({ jobs }: WorkflowJobsProps) {
         <CardContent>
           <WorkflowJobsTable
             data={jobs}
-            loading={loading}
+            loading={isLoading}
             onRetry={handleRetry}
             onCancel={handleCancel}
           />
@@ -133,30 +139,3 @@ export default function WorkflowJobs({ jobs }: WorkflowJobsProps) {
     </div>
   );
 }
-
-export const getServerSideProps: GetServerSideProps = async () => {
-  try {
-    // In production, you might want to fetch from your own API or directly from Prefect
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/workflow-jobs`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch workflow jobs');
-    }
-    
-    const jobs = await response.json();
-
-    return {
-      props: {
-        jobs,
-      },
-    };
-  } catch (error) {
-    console.error('Failed to fetch workflow jobs:', error);
-    return {
-      props: {
-        jobs: [],
-      },
-    };
-  }
-};

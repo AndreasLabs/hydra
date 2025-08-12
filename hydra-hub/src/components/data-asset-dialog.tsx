@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
-import { DataAsset } from '@/types/data-asset';
+import type { DataAsset } from '@prisma/client';
 import {
   Dialog,
   DialogContent,
@@ -227,7 +227,7 @@ export function DataAssetDialog({ open, onOpenChange, asset, onSave }: DataAsset
                 <FormItem>
                   <FormLabel>Owner UUID</FormLabel>
                   <FormControl>
-                    <Input placeholder={defaultUserUUID} value={defaultUserUUID} {...field} />
+                    <Input placeholder={defaultUserUUID} {...field} />
                   </FormControl>
                   <FormDescription>
                     The UUID of the user or system that owns this asset.

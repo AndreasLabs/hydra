@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { fetchDataAssets, createDataAsset } from '@/lib/queries/data-assets';
 import { StorageType } from '../../../../generated/prisma';
+import { fetchDataAssets as getDataAssets, createDataAsset } from '@/lib/data-assets/queries';
 
 export default async function handler(
   req: NextApiRequest,
@@ -9,7 +9,7 @@ export default async function handler(
   try {
     switch (req.method) {
       case 'GET':
-        const dataAssets = await fetchDataAssets();
+        const dataAssets = await getDataAssets();
         res.status(200).json(dataAssets);
         break;
 

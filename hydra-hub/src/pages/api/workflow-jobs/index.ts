@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { FlowRun, PrefectApiResponse } from '@/types/workflow-job';
+import { prefectClient, type FlowRun } from '@/lib/prefect/client';
 
 // Mock data for now - in production, you would configure these from environment variables
 const PREFECT_API_URL = process.env.PREFECT_API_URL || 'https://api.prefect.cloud/api/accounts/{account_id}/workspaces/{workspace_id}';
@@ -9,7 +9,8 @@ async function fetchPrefectFlowRuns(): Promise<FlowRun[]> {
   // For now, return mock data since we don't have actual Prefect credentials
   // In production, you would make actual API calls to Prefect
   
-  if (!PREFECT_API_KEY || PREFECT_API_URL.includes('{account_id}')) {
+  const isPlaceholder = PREFECT_API_URL.includes('{account_id}') || PREFECT_API_URL.includes('{workspace_id}');
+  if (isPlaceholder) {
     // Return mock data for demonstration
     return [
       {
@@ -84,19 +85,8 @@ async function fetchPrefectFlowRuns(): Promise<FlowRun[]> {
   }
 
   try {
-    const response = await fetch(`${PREFECT_API_URL}/flow_runs/`, {
-      headers: {
-        'Authorization': `Bearer ${PREFECT_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Prefect API error: ${response.status}`);
-    }
-
-    const data: PrefectApiResponse<FlowRun> = await response.json();
-    return data.data || [];
+    const runs = await prefectClient.flowRuns.filter({ limit: 25, sort: 'START_TIME_DESC' });
+    return runs;
   } catch (error) {
     console.error('Error fetching Prefect flow runs:', error);
     throw error;
