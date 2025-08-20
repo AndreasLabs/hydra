@@ -5,8 +5,11 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "exif>=1.6.1",
     "minio>=7.2.16",
+    "pandas>=2.3.1",
     "prefect>=3.4.11",
     "prisma>=0.15.0",
+    "pyarrow>=21.0.0",
     "pyodm>=1.5.12",
 ]

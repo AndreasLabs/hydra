@@ -12,6 +12,7 @@ from typing import List, Optional
 
 from tasks.tasks_list_files import list_minio_objects
 from tasks.task_create_asset import create_data_asset
+from tasks.tasks_gps import extract_gps_coordinates
 
 
 @flow
@@ -43,6 +44,17 @@ def ingest_flow(
         prefix=prefix,
         recursive=recursive
     )
+    
+    # Extract GPS coordinates (if present) per image object
+    for obj in objects:
+        try:
+            extract_gps_coordinates(
+                minio_objects=[obj],
+                bucket_name=bucket_name
+            )
+        except Exception:
+            # Continue ingest even if GPS extraction fails for this object
+            continue
     
     # Create data asset for each object
     asset_ids = []

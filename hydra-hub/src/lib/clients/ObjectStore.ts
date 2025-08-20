@@ -52,3 +52,4 @@ export const SaveJson = async (bucketName: string, path: string, data: any) => {
 }
 
 export default minioClient;
+

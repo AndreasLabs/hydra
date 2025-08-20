@@ -3,6 +3,7 @@ from prefect import task
 from minio import Minio
 from minio.error import S3Error
 from prefect.logging import get_run_logger
+from minio.datatypes import Object as MinioObject
 
 
 
@@ -14,7 +15,7 @@ def list_minio_objects(
     access_key: str = "minioadmin",
     secret_key: str = "minioadmin",
     recursive: bool = True
-) -> List[str]:
+) -> List[MinioObject]:
     """
     Lists all objects in a MinIO bucket with the given prefix.
     
@@ -28,7 +29,7 @@ def list_minio_objects(
         recursive (bool): List objects recursively if True
         
     Returns:
-        List[str]: A list of object names found in the bucket with the given prefix
+        List[MinioObject]: A list of MinIO object metadata for the given prefix
     """
     logger = get_run_logger()
     logger.info(f"Listing objects in bucket: {bucket_name} with prefix: {prefix}")
