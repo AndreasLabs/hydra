@@ -1,8 +1,9 @@
-import { Home, Database, Workflow, BarChart3, Settings, Box } from "lucide-react"
+import { Home, Database, Workflow, BarChart3, Settings, Box, FolderOpen } from "lucide-react"
 
 export const appNavigation = [
   { name: "Home", href: "/", icon: Home },
   { name: "Dashboard", href: "/dashboard", icon: Database },
+  { name: "Datasets", href: "/datasets", icon: FolderOpen },
   { name: "Workflow Jobs", href: "/workflow-jobs", icon: Workflow },
   { name: "Point Cloud", href: "/point-cloud", icon: Box },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },

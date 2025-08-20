@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { prefectClient } from '@/lib/prefect/client';
+import { prefectClient } from '@/lib/clients/PrefectClient';
 import type { 
   FlowRun, 
   Deployment, 
   FlowRunsFilterRequest, 
   DeploymentsFilterRequest 
-} from '@/lib/prefect/client';
+} from '@/lib/clients/PrefectClient';
 
 // Query keys
 export const prefectKeys = {

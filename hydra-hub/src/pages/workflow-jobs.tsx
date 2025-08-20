@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import type { FlowRun, Flow, LogEntry } from '@/lib/prefect/client';
-import { prefectClient } from '@/lib/prefect/client';
+import type { FlowRun, Flow, LogEntry } from '@/lib/clients/PrefectClient';
+import { prefectClient } from '@/lib/clients/PrefectClient';
 import { WorkflowJobsTable } from '@/components/workflow-jobs-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

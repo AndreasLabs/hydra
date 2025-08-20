@@ -1,3 +1,6 @@
+import adze from 'adze';
+
+const logger = adze.namespace('pages').namespace('dashboard');
 import { useState } from 'react';
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
@@ -10,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Plus, Database } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { StatCard } from '@/components/stat-card';
-import { fetchDataAssets } from '@/lib/data-assets/queries';
+import { fetchDataAssets } from '@/lib/handlers/DataAssetHandlers';
 
 interface DashboardProps {
   dataAssets: DataAsset[];
@@ -53,7 +56,7 @@ export default function Dashboard({ dataAssets }: DashboardProps) {
         alert('Failed to delete data asset');
       }
     } catch (error) {
-      console.error('Failed to delete data asset:', error);
+      logger.error('Failed to delete data asset', { error });
       alert('Failed to delete data asset');
     } finally {
       setLoading(false);
@@ -129,7 +132,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
       },
     };
   } catch (error) {
-    console.error('Failed to fetch data assets:', error);
+    logger.error('Failed to fetch data assets', { error });
     return {
       props: {
         dataAssets: [],

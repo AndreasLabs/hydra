@@ -1,4 +1,4 @@
-import { db } from './db';
+import { db } from '../clients/db';
 import { DataAsset, StorageType } from '@prisma/client';
 
 export async function fetchDataAssets(): Promise<DataAsset[]> {

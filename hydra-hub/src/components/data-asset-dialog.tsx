@@ -1,3 +1,6 @@
+import adze from 'adze';
+
+const logger = adze.namespace('components').namespace('data-asset-dialog');
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -106,11 +109,11 @@ export function DataAssetDialog({ open, onOpenChange, asset, onSave }: DataAsset
         form.reset();
       } else {
         const error = await response.json();
-        console.error('Failed to save data asset:', error);
+        logger.error('Failed to save data asset', { error });
         alert('Failed to save data asset: ' + (error.error || 'Unknown error'));
       }
     } catch (error) {
-      console.error('Failed to save data asset:', error);
+      logger.error('Failed to save data asset', { error });
       alert('Failed to save data asset');
     } finally {
       setLoading(false);

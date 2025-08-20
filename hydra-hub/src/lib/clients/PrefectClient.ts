@@ -1,3 +1,6 @@
+import adze from 'adze';
+
+const logger = adze.namespace('lib').namespace('clients').namespace('PrefectClient');
 /*
  Simple Prefect v3 REST client for Next.js/React environments.
 
@@ -211,7 +214,7 @@ export function createPrefectClient(config: PrefectClientConfig = getDefaultConf
           });
           return Array.isArray(response) ? response : [];
         } catch (err) {
-          console.error('Failed to fetch logs:', err);
+          logger.error('Failed to fetch logs', { error: err });
           return [];
         }
       },
@@ -229,7 +232,7 @@ export function createPrefectClient(config: PrefectClientConfig = getDefaultConf
           });
           return Array.isArray(response) ? response : [];
         } catch (err) {
-          console.error('Failed to fetch artifacts:', err);
+          logger.error('Failed to fetch artifacts', { error: err });
           return [];
         }
       },
@@ -247,7 +250,7 @@ export function createPrefectClient(config: PrefectClientConfig = getDefaultConf
           });
           return Array.isArray(response) && response.length > 0 ? response[0] : null;
         } catch (err) {
-          console.error('Failed to fetch latest log:', err);
+          logger.error('Failed to fetch latest log', { error: err });
           return null;
         }
       },

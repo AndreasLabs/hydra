@@ -1,5 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { prefectClient, type FlowRun } from '@/lib/prefect/client';
+import { prefectClient, type FlowRun } from '@/lib/clients/PrefectClient';
+import adze from 'adze';
+
+const logger = adze.namespace('api').namespace('workflow-jobs');
 
 // Mock data for now - in production, you would configure these from environment variables
 const PREFECT_API_URL = process.env.PREFECT_API_URL || 'https://api.prefect.cloud/api/accounts/{account_id}/workspaces/{workspace_id}';
@@ -88,7 +91,7 @@ async function fetchPrefectFlowRuns(): Promise<FlowRun[]> {
     const runs = await prefectClient.flowRuns.filter({ limit: 25, sort: 'START_TIME_DESC' });
     return runs;
   } catch (error) {
-    console.error('Error fetching Prefect flow runs:', error);
+    logger.error('Error fetching Prefect flow runs', { error });
     throw error;
   }
 }
@@ -109,7 +112,7 @@ export default async function handler(
         res.status(405).end(`Method ${req.method} Not Allowed`);
     }
   } catch (error) {
-    console.error('API Error:', error);
+    logger.error('API Error', { error });
     res.status(500).json({ error: 'Internal server error' });
   }
 }

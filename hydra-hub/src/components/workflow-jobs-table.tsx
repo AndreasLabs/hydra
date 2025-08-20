@@ -1,4 +1,4 @@
-import type { FlowRun } from '@/lib/prefect/client';
+import type { FlowRun } from '@/lib/clients/PrefectClient';
 
 // Enhanced job data with flow info and latest log
 interface EnhancedFlowRun extends FlowRun {
