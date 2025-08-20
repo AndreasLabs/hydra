@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useQuery } from '@tanstack/react-query';
-import { prefectClient, FlowRun, LogEntry, Artifact } from '@/lib/clients/PrefectClient';
+import { prefectClient, FlowRun, LogEntry, Artifact } from '@/lib/clients/prefect';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

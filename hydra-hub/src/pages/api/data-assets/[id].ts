@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { StorageType } from '../../../../generated/prisma';
-import { fetchDataAssetById as getDataAssetById, updateDataAsset, deleteDataAsset } from '@/lib/handlers/DataAssetHandlers';
+import { fetchDataAssetById as getDataAssetById } from '@/lib/queries/data-assets/fetch-data-asset-by-id';
+import { updateDataAsset } from '@/lib/queries/data-assets/update-data-asset';
+import { deleteDataAsset } from '@/lib/queries/data-assets/delete-data-asset';
 import adze from 'adze';
 
 const logger = adze.namespace('api').namespace('data-assets').namespace('[id]');

@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Plus, Database } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { StatCard } from '@/components/stat-card';
-import { fetchDataAssets } from '@/lib/handlers/DataAssetHandlers';
+import { fetchDataAssets } from '@/lib/queries/data-assets/fetch-data-assets';
 
 interface DashboardProps {
   dataAssets: DataAsset[];

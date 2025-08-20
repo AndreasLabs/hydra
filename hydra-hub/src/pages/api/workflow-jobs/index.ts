@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { prefectClient, type FlowRun } from '@/lib/clients/PrefectClient';
+import { prefectClient, type FlowRun } from '@/lib/clients/prefect';
 import adze from 'adze';
 
 const logger = adze.namespace('api').namespace('workflow-jobs');

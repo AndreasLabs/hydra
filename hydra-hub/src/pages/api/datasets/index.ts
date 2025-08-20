@@ -1,5 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { CreateDataset, ListDatasets, AddQueryToDataset, GetDataset, type Dataset, type DatasetQuery } from '@/lib/handlers/DatasetHandlers';
+import { CreateDataset } from '@/lib/queries/datasets/create-dataset';
+import { ListDatasets } from '@/lib/queries/datasets/list-datasets';
+import { AddQueryToDataset } from '@/lib/queries/datasets/add-query-to-dataset';
+import { GetDataset } from '@/lib/queries/datasets/get-dataset';
+import type { Dataset, DatasetQuery } from '@/lib/queries/datasets/types';
 import adze from 'adze';
 
 const logger = adze;
