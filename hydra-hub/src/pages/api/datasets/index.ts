@@ -3,7 +3,8 @@ import { CreateDataset } from '@/lib/queries/datasets/create-dataset';
 import { ListDatasets } from '@/lib/queries/datasets/list-datasets';
 import { AddQueryToDataset } from '@/lib/queries/datasets/add-query-to-dataset';
 import { GetDataset } from '@/lib/queries/datasets/get-dataset';
-import type { Dataset, DatasetQuery } from '@/lib/queries/datasets/types';
+import { ZDataset, ZDatasetQuery } from '@/lib/queries/datasets/types';
+import { z } from 'zod';
 import adze from 'adze';
 
 const logger = adze;
@@ -20,8 +21,8 @@ export default async function handler(
         logger.debug('Processing GET request');
         
         // Handle single dataset get if key provided
-        const { key } = req.query;
-        if (key && typeof key === 'string') {
+        const key = typeof req.query.key === 'string' ? req.query.key : undefined;
+        if (key) {
           logger.debug('Getting single dataset', { key });
           const dataset = await GetDataset(key);
           logger.info('Retrieved dataset', { key });
@@ -36,22 +37,18 @@ export default async function handler(
 
       case 'POST': {
         logger.debug('Processing POST request', { body: req.body });
-        const { key, name, description, queries } = req.body as Partial<Dataset>;
+        const createSchema = ZDataset.pick({ key: true, name: true, description: true, queries: true })
+          .extend({
+            createdAt: z.preprocess(() => new Date(), z.date()),
+            updatedAt: z.preprocess(() => new Date(), z.date()),
+          });
 
-        if (!key || !name) {
-          logger.warn('Missing required fields in POST request', { key, name });
-          return res.status(400).json({ error: 'Missing required fields: key, name' });
+        const parsed = createSchema.safeParse(req.body);
+        if (!parsed.success) {
+          logger.warn('Invalid dataset POST body', { issues: parsed.error.issues });
+          return res.status(400).json({ error: 'Invalid body', issues: parsed.error.issues });
         }
-
-        const now = new Date();
-        const dataset: Dataset = {
-          key,
-          name,
-          description: description ?? '',
-          createdAt: now,
-          updatedAt: now,
-          queries: Array.isArray(queries) ? queries : [],
-        };
+        const dataset = parsed.data;
 
         logger.debug('Creating dataset', { dataset });
         await CreateDataset(dataset);
@@ -61,13 +58,18 @@ export default async function handler(
 
       case 'PUT': {
         logger.debug('Processing PUT request', { body: req.body });
-        const { datasetKey, query } = req.body as { datasetKey: string, query: DatasetQuery };
+        const addQuerySchema = z.object({
+          datasetKey: z.string().min(1),
+          query: ZDatasetQuery,
+        }).strict();
 
-        if (!datasetKey || !query) {
-          logger.warn('Missing required fields in PUT request', { datasetKey, query });
-          return res.status(400).json({ error: 'Missing required fields: datasetKey, query' });
+        const parsed = addQuerySchema.safeParse(req.body);
+        if (!parsed.success) {
+          logger.warn('Invalid dataset PUT body', { issues: parsed.error.issues });
+          return res.status(400).json({ error: 'Invalid body', issues: parsed.error.issues });
         }
 
+        const { datasetKey, query } = parsed.data;
         logger.debug('Adding query to dataset', { datasetKey, query });
         await AddQueryToDataset(datasetKey, query);
         logger.info('Added query to dataset successfully', { datasetKey });

@@ -230,22 +230,6 @@ export default function PointCloudPage() {
           height: 100% !important;
           display: block;
         }
-        /* Fix body/html to allow full-height layout inside AppShell */
-        html, body, #__next {
-          height: 100%;
-        }
-        /* Ensure AppShell fills viewport */
-        .app-shell {
-          min-height: 100vh;
-          display: flex;
-          flex-direction: column;
-        }
-        /* Main content area should flex-grow */
-        .app-shell > main {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-        }
       `}</style>
       
       <AppShell>

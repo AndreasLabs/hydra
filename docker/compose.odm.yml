@@ -4,7 +4,7 @@ services:
   nodeodm:
     image: opendronemap/nodeodm
     ports:
-      - "3000:3000"
+      - "7070:3000"
     volumes:
       - odm_data:/var/www/data
     restart: unless-stopped

@@ -2,6 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { StorageType } from '../../../../generated/prisma';
 import { fetchDataAssets as getDataAssets } from '@/lib/queries/data-assets/fetch-data-assets';
 import { createDataAsset } from '@/lib/queries/data-assets/create-data-asset';
+import { ZDataAssetCreate } from '@/lib/queries/data-assets/types';
+import { z } from 'zod';
 import adze from 'adze';
 
 const logger = adze.namespace('api').namespace('data-assets');
@@ -20,13 +22,15 @@ export default async function handler(
         break;
 
       case 'POST':
-        const { path, storage_type, storage_location, asset_type, owner_uuid } = req.body;
-        
-        if (!path || !storage_type || !storage_location || !asset_type || !owner_uuid) {
-          logger.warn('Missing required fields on create', { path: !!path, storage_type: !!storage_type, storage_location: !!storage_location, asset_type: !!asset_type, owner_uuid: !!owner_uuid });
-          return res.status(400).json({ error: 'Missing required fields' });
+        const parsed = ZDataAssetCreate.safeParse(req.body);
+        if (!parsed.success) {
+          logger.warn('Invalid data-asset POST body', { issues: parsed.error.issues });
+          return res.status(400).json({ error: 'Invalid body', issues: parsed.error.issues });
         }
 
+        const { path, storage_type, storage_location, asset_type, owner_uuid } = parsed.data;
+
+        // Extra guard to ensure generated prisma enum aligns
         if (!Object.values(StorageType).includes(storage_type)) {
           logger.warn('Invalid storage_type', { storage_type });
           return res.status(400).json({ error: 'Invalid storage_type' });

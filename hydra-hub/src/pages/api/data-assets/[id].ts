@@ -3,6 +3,8 @@ import { StorageType } from '../../../../generated/prisma';
 import { fetchDataAssetById as getDataAssetById } from '@/lib/queries/data-assets/fetch-data-asset-by-id';
 import { updateDataAsset } from '@/lib/queries/data-assets/update-data-asset';
 import { deleteDataAsset } from '@/lib/queries/data-assets/delete-data-asset';
+import { ZDataAssetUpdate } from '@/lib/queries/data-assets/types';
+import { z } from 'zod';
 import adze from 'adze';
 
 const logger = adze.namespace('api').namespace('data-assets').namespace('[id]');
@@ -36,22 +38,19 @@ export default async function handler(
           return res.status(404).json({ error: 'Data asset not found' });
         }
 
-        const updateData: any = {};
-        const { path, storage_type, storage_location, asset_type, owner_uuid } = req.body;
-
-        if (path !== undefined) updateData.path = path;
-        if (storage_type !== undefined) {
-          if (!Object.values(StorageType).includes(storage_type)) {
-            logger.warn('Invalid storage_type on update', { storage_type });
-            return res.status(400).json({ error: 'Invalid storage_type' });
-          }
-          updateData.storage_type = storage_type;
+        const parsed = ZDataAssetUpdate.safeParse(req.body);
+        if (!parsed.success) {
+          logger.warn('Invalid data-asset PUT body', { issues: parsed.error.issues });
+          return res.status(400).json({ error: 'Invalid body', issues: parsed.error.issues });
         }
-        if (storage_location !== undefined) updateData.storage_location = storage_location;
-        if (asset_type !== undefined) updateData.asset_type = asset_type;
-        if (owner_uuid !== undefined) updateData.owner_uuid = owner_uuid;
 
-        const updatedDataAsset = await updateDataAsset(id, updateData);
+        const { storage_type } = parsed.data;
+        if (storage_type !== undefined && !Object.values(StorageType).includes(storage_type)) {
+          logger.warn('Invalid storage_type on update', { storage_type });
+          return res.status(400).json({ error: 'Invalid storage_type' });
+        }
+
+        const updatedDataAsset = await updateDataAsset(id, parsed.data);
         logger.info('Updated data asset', { id });
         res.status(200).json(updatedDataAsset);
         break;
