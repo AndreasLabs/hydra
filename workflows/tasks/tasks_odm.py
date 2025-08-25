@@ -54,7 +54,7 @@ def process_images_with_odm(
         if minio_config:
             logger.info("Downloading images from MinIO...")
             client = Minio(
-                endpoint=minio_config.get('endpoint', 'localhost:9000'),
+                endpoint=minio_config.get('endpoint', 'localhost:9050'),
                 access_key=minio_config.get('access_key', 'minioadmin'),
                 secret_key=minio_config.get('secret_key', 'minioadmin'),
                 secure=False
@@ -208,7 +208,7 @@ def upload_directory_to_minio(
     local_dir: str,
     bucket_name: str,
     prefix: str = "",
-    endpoint: str = "localhost:9000",
+    endpoint: str = "localhost:9050",
     access_key: str = "minioadmin",
     secret_key: str = "minioadmin",
     secure: bool = False,

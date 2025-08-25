@@ -14,7 +14,7 @@ import hashlib
 def extract_gps_coordinates(
     minio_objects: List[MinioObject],
     bucket_name: str,
-    endpoint: str = "localhost:9000", 
+    endpoint: str = "localhost:9050", 
     access_key: str = "minioadmin",
     secret_key: str = "minioadmin"
 ) -> pd.DataFrame:

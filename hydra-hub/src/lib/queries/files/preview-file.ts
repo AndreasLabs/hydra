@@ -1,6 +1,6 @@
 import adze from 'adze';
 import minioClient from '@/lib/clients/minio';
-import type { PreviewFileOptions, PreviewFileResult } from './types-files';
+import type { PreviewFileOptions, PreviewFileResult } from '../../types/files/types-files';
 import { getFileExtension, isImageExtension, isTextExtension } from '@/lib/constants/files';
 
 const logger = adze;

@@ -27,6 +27,15 @@ export default async function handler(
             if (typeof s === 'number') return s;
             return undefined;
           }, z.number().int().positive().max(10_000).default(10_000)),
+          expiry: z.preprocess((v) => {
+            const s = Array.isArray(v) ? v[0] : v;
+            if (typeof s === 'string') {
+              const n = Number(s);
+              return Number.isFinite(n) ? n : undefined;
+            }
+            if (typeof s === 'number') return s;
+            return undefined;
+          }, z.number().int().positive().max(3600).optional()),
         }).refine((d) => d.key || d.path, { message: 'Either key or path is required' });
 
         const parsed = previewQuerySchema.safeParse(req.query);
@@ -38,10 +47,11 @@ export default async function handler(
         const q = parsed.data;
         const objectKey = q.key ?? q.path!;
         const limit = q.limit;
+        const expirySeconds = q.expiry;
 
         logger.debug('Generating preview via lib', { objectKey, limit });
         try {
-          const result = await PreviewFile({ key: objectKey, limit });
+          const result = await PreviewFile({ key: objectKey, limit, expirySeconds });
           logger.info('Preview generated', { objectKey});
           return res.status(200).json(result);
         } catch (err) {

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import adze from 'adze';
 import { ListFiles } from '@/lib/queries/files/list-files';
-import { ZFileSortField } from '@/lib/queries/files/types-files';
+import { ZFileSortField } from '@/lib/types/files/types-files';
 import { z } from 'zod';
 
 const logger = adze;

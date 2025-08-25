@@ -20,6 +20,8 @@ export default function PointCloudPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [scriptsLoaded, setScriptsLoaded] = useState(false);
+  const [eptUrl, setEptUrl] = useState<string | null>(null);
+  const [cloudName, setCloudName] = useState<string>("Point Cloud");
   const viewerContainerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<any>(null);
 
@@ -41,18 +43,91 @@ export default function PointCloudPage() {
       }
     };
 
-  // Initialize the viewer once scripts are loaded and the component is mounted
+  // Parse query params client-side to derive EPT URL/name
   useEffect(() => {
-    if (scriptsLoaded && viewerContainerRef.current) {
+    if (typeof window === "undefined") return;
+    try {
+      const ensureEptJson = (input: string): string => {
+        try {
+          const u = new URL(input, window.location.origin);
+          if (u.pathname.toLowerCase().endsWith('ept.json')) return input;
+          u.pathname = u.pathname.replace(/\/$/, '') + '/ept.json';
+          return u.toString();
+        } catch {
+          const [base, qs] = input.split('?');
+          if (base.toLowerCase().endsWith('ept.json')) return input;
+          const withEpt = base.replace(/\/$/, '') + '/ept.json';
+          return qs ? `${withEpt}?${qs}` : withEpt;
+        }
+      };
+
+      const params = new URLSearchParams(window.location.search);
+      const srcParam = params.get("src");
+      const folderParam = params.get("folder");
+      const keyParam = params.get("key");
+      const pathParam = params.get("path");
+      const nameParam = params.get("name");
+
+      if (nameParam && nameParam.trim().length > 0) {
+        setCloudName(nameParam.trim());
+      }
+
+      // If a direct source URL is provided, accept it (append ept.json if needed, before query)
+      if (srcParam && srcParam.trim().length > 0) {
+        const src = srcParam.trim();
+        setEptUrl(ensureEptJson(src));
+        return;
+      }
+
+      // If a local/public folder is provided, build the EPT URL from it
+      if (folderParam && folderParam.trim().length > 0) {
+        const folder = folderParam.trim();
+        let urlCandidate = folder;
+        if (!/ept\.json$/i.test(folder)) {
+          if (/\/entwine_pointcloud\/?$/i.test(folder)) {
+            urlCandidate = folder.replace(/\/$/, '') + "/ept.json";
+          } else {
+            urlCandidate = folder.replace(/\/$/, '') + "/entwine_pointcloud/ept.json";
+          }
+        }
+        setEptUrl(ensureEptJson(urlCandidate));
+        return;
+      }
+
+      // If object storage key/path is provided, route through our proxy so all relative fetches (hierarchy, tiles) are authenticated
+      if ((keyParam && keyParam.trim()) || (pathParam && pathParam.trim())) {
+        const raw = (keyParam && keyParam.trim()) || (pathParam && pathParam.trim()) || '';
+        const manifestKey = (() => {
+          const cleaned = raw.replace(/^\/+/, '');
+          if (cleaned.toLowerCase().endsWith('ept.json')) return cleaned;
+          if (/\/entwine_pointcloud\/?$/i.test(cleaned)) return cleaned.replace(/\/$/, '') + '/ept.json';
+          return cleaned.replace(/\/$/, '') + '/entwine_pointcloud/ept.json';
+        })();
+        const proxyUrl = `/api/files/proxy/${manifestKey}`;
+        setEptUrl(proxyUrl);
+        return;
+      }
+
+      // Fallback to demo dataset bundled in public
+      setEptUrl("/data/odm_results/site-1/entwine_pointcloud/ept.json");
+      setCloudName("Site 1");
+    } catch (err) {
+      console.warn("Failed to parse query params for point cloud source", err);
+    }
+  }, []);
+
+  // Initialize the viewer once scripts are loaded and the component is mounted and EPT URL is known
+  useEffect(() => {
+    if (scriptsLoaded && eptUrl && viewerContainerRef.current) {
       initPotreeViewer();
     }
-  }, [scriptsLoaded]);
+  }, [scriptsLoaded, eptUrl]);
 
   const initPotreeViewer = () => {
     try {
       console.log("Initializing Potree viewer...");
       
-      if (window.Potree && viewerContainerRef.current) {
+      if (window.Potree && viewerContainerRef.current && eptUrl) {
         // Create viewer
         const viewer = new window.Potree.Viewer(viewerContainerRef.current);
         
@@ -76,11 +151,10 @@ export default function PointCloudPage() {
           }
         } catch {}
         viewer.setDescription("ODM Point Cloud Viewer");
-        
-        // Following the exact pattern from the Potree examples
-        const path = "/data/odm_results/site-1/entwine_pointcloud/ept.json";
-        const name = "Site 1";
-        
+
+        const path = eptUrl;
+        const name = cloudName || "Point Cloud";
+
         console.log("Loading point cloud from:", path);
         
         // Using the exact pattern from the Potree examples

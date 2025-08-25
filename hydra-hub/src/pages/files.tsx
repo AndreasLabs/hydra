@@ -8,14 +8,15 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Folder, File as FileIcon, ChevronRight, ChevronDown, RefreshCcw, Search, Download, Maximize2, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
-import type { ListFileResult } from '@/lib/queries/files/types-files';
+import type { ListFileResult } from '@/lib/types/files/types-files';
+import { CodeBlock, CodeBlockCopyButton } from "@/components/ui/shadcn-io/ai/code-block";
 
 type TreeNode = {
   name: string;
   path: string;
   isDirectory: boolean;
   size?: number;
-  lastModified?: Date;
+  lastModified?: Date;  
   children?: TreeNode[];
 };
 
@@ -27,7 +28,7 @@ export default function FilesPage() {
   const [files, setFiles] = useState<ListFileResult[]>([]);
 
   // Query controls
-  const [pathPrefix, setPathPrefix] = useState<string>('');
+  const [pathPrefix, setPathPrefix] = useState<string>(''); 
   const [recursive, setRecursive] = useState<boolean>(true);
   const [nameContains, setNameContains] = useState<string>('');
 
@@ -202,6 +203,8 @@ const [previewError, setPreviewError] = useState<string | null>(null);
                 <div className="text-muted-foreground">Loading preview…</div>
               ) : previewError ? (
                 <div className="text-red-600">{previewError}</div>
+              ) : isEptJson(selectedPath) ? (
+                <EptEmbeddedViewer path={selectedPath} />
               ) : previewKind === 'text' && previewContent ? (
                 <TextPreview content={previewContent} truncated={previewTruncated} path={selectedPath} />
               ) : previewKind === 'image' && previewImageUrl ? (
@@ -369,6 +372,7 @@ function TextPreview({ content, truncated, path }: { content: string; truncated:
     return dot >= 0 ? path.slice(dot + 1).toLowerCase() : ''
   })()
   let display = content
+  let language = ext
   if (ext === 'json') {
     try {
       const parsed = JSON.parse(content)
@@ -379,7 +383,7 @@ function TextPreview({ content, truncated, path }: { content: string; truncated:
   }
   return (
     <div className="space-y-2">
-      <pre className="bg-muted rounded p-3 overflow-auto whitespace-pre-wrap break-words text-sm">{display}</pre>
+      <CodeBlock code={display} language={language} showLineNumbers={true} />
       {truncated ? <div className="text-xs text-muted-foreground">Preview truncated</div> : null}
     </div>
   )
@@ -633,6 +637,47 @@ function FullscreenImageViewer({ url, path, onDownload }: { url: string; path: s
 function isTextPreviewable(path: string) {
   const lower = path.toLowerCase()
   return lower.endsWith('.txt') || lower.endsWith('.json')
+}
+
+function isEptJson(path: string) {
+  const p = (path || '').toLowerCase();
+  return p.endsWith('/ept.json') || p.endsWith('ept.json');
+}
+
+function EptPreviewActions({ path }: { path: string }) {
+  const key = path.startsWith('/') ? path.slice(1) : path;
+  const namePart = key.split('/').slice(-3, -1).join('/') || key.split('/').slice(-2, -1).join('/') || 'Point Cloud';
+  // Ensure we pass the manifest key itself to get-url (viewer will presign and normalize if needed)
+  const manifestKey = key.endsWith('ept.json') ? key : `${key.replace(/\/$/, '')}/ept.json`;
+  const viewerUrl = `/point-cloud?key=${encodeURIComponent(manifestKey)}&name=${encodeURIComponent(namePart)}`;
+  return (
+    <div className="flex items-center justify-between">
+      <div className="text-sm text-muted-foreground">Entwine Point Tiles manifest detected</div>
+      <Button asChild>
+        <a href={viewerUrl} target="_blank" rel="noreferrer">Open in 3D Viewer</a>
+      </Button>
+    </div>
+  );
+}
+
+function EptEmbeddedViewer({ path }: { path: string }) {
+  const key = path.startsWith('/') ? path.slice(1) : path;
+  const namePart = key.split('/').slice(-3, -1).join('/') || key.split('/').slice(-2, -1).join('/') || 'Point Cloud';
+  const manifestKey = key.endsWith('ept.json') ? key : `${key.replace(/\/$/, '')}/ept.json`;
+  const src = `/point-cloud?key=${encodeURIComponent(manifestKey)}&name=${encodeURIComponent(namePart)}`;
+  return (
+    <div className="w-full h-[60vh]">
+      <iframe
+        src={src}
+        title={`Point Cloud: ${namePart}`}
+        className="w-full h-full rounded border"
+      />
+      <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+        <span>Embedded 3D viewer</span>
+        <EptPreviewActions path={path} />
+      </div>
+    </div>
+  );
 }
 
 

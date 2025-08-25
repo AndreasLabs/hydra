@@ -1,40 +1,6 @@
 import { z } from 'zod';
 
-export type FileFilterOptions = {
-  nameContains?: string;
-  nameStartsWith?: string;
-  nameEndsWith?: string;
-  extensions?: string[];
-  minSize?: number;
-  maxSize?: number;
-  modifiedAfter?: Date;
-  modifiedBefore?: Date;
-}
-
-export type FileSortField = 'name' | 'size' | 'lastModified';
-
-export type FileSortOptions = {
-  by: FileSortField;
-  order?: 'asc' | 'desc';
-}
-
-export type ListFileQueryOptions = {
-  path?: string;
-  recursive?: boolean;
-  filter?: FileFilterOptions;
-  sort?: FileSortOptions;
-}
-
-export type ListFileResult = {
-    key: string;
-    name: string;
-    size: number;
-    lastModified: Date;
-    metadata: Record<string, any>;
-    raw_minio: string;
-}
-
-// Zod schemas mirroring the above runtime shapes
+// Define Zod schemas first
 export const ZFileSortField = z.enum(['name', 'size', 'lastModified']);
 
 export const ZFileFilterOptions = z.object({
@@ -46,7 +12,7 @@ export const ZFileFilterOptions = z.object({
   maxSize: z.number().int().nonnegative().optional(),
   modifiedAfter: z.date().optional(),
   modifiedBefore: z.date().optional(),
-}).strict().partial();
+}).strict();
 
 export const ZFileSortOptions = z.object({
   by: ZFileSortField,
@@ -69,30 +35,8 @@ export const ZListFileResult = z.object({
   raw_minio: z.string(),
 }).strict();
 
-// Preview types
-export type PreviewKind = 'text' | 'image';
-
-export type PreviewFileOptions = {
-  key: string;
-  limit?: number; // for text; max 10_000
-  expirySeconds?: number; // for image urls
-}
-
-export type PreviewTextResult = {
-  kind: 'text';
-  key: string;
-  content: string;
-  truncated: boolean;
-}
-
-export type PreviewImageResult = {
-  kind: 'image';
-  key: string;
-  url: string; // presigned
-  expiresIn: number; // seconds
-}
-
-export type PreviewFileResult = PreviewTextResult | PreviewImageResult;
+// Preview schemas
+export const ZPreviewKind = z.enum(['text', 'image']);
 
 export const ZPreviewFileOptions = z.object({
   key: z.string().min(1),
@@ -115,3 +59,15 @@ export const ZPreviewImageResult = z.object({
 }).strict();
 
 export const ZPreviewFileResult = z.union([ZPreviewTextResult, ZPreviewImageResult]);
+
+// Infer TypeScript types from Zod schemas
+export type FileSortField = z.infer<typeof ZFileSortField>;
+export type FileFilterOptions = z.infer<typeof ZFileFilterOptions>;
+export type FileSortOptions = z.infer<typeof ZFileSortOptions>;
+export type ListFileQueryOptions = z.infer<typeof ZListFileQueryOptions>;
+export type ListFileResult = z.infer<typeof ZListFileResult>;
+export type PreviewKind = z.infer<typeof ZPreviewKind>;
+export type PreviewFileOptions = z.infer<typeof ZPreviewFileOptions>;
+export type PreviewTextResult = z.infer<typeof ZPreviewTextResult>;
+export type PreviewImageResult = z.infer<typeof ZPreviewImageResult>;
+export type PreviewFileResult = z.infer<typeof ZPreviewFileResult>;

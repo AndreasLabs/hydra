@@ -30,7 +30,8 @@ yarn-error.log*
 
 # vercel
 .vercel
-
+odm_results
 # typescript
 *.tsbuildinfo
+__pycache__
 next-env.d.ts

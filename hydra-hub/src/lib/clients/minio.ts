@@ -6,7 +6,7 @@ const logger = adze.namespace("objectstore")
 
 const minioClient = new Minio.Client({
   endPoint: '127.0.0.1',
-  port: 9000,
+  port: 9050,
   useSSL: false,
   accessKey: 'minioadmin',
   secretKey: 'minioadmin',

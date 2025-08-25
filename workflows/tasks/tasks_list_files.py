@@ -11,7 +11,7 @@ from minio.datatypes import Object as MinioObject
 def list_minio_objects(
     bucket_name: str,
     prefix: str = "ingest/",
-    endpoint: str = "localhost:9000",
+    endpoint: str = "localhost:9050",
     access_key: str = "minioadmin",
     secret_key: str = "minioadmin",
     recursive: bool = True
