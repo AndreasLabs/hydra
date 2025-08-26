@@ -1,19 +1,9 @@
 'use client';
 
-import { Button } from '@repo/shadcn-ui/components/ui/button';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@repo/shadcn-ui/components/ui/collapsible';
-import { Input } from '@repo/shadcn-ui/components/ui/input';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@repo/shadcn-ui/components/ui/tooltip';
-import { cn } from '@repo/shadcn-ui/lib/utils';
+import { Button } from '@/components/ui/button';
+// Collapsible is not available; replace usage with Button/Divs as needed if referenced.
+import { Input } from '@/components/ui/input';
+import { cn } from '@/components/ui/shadcn-io/utils';
 import { ChevronDownIcon } from 'lucide-react';
 import type { ComponentProps, ReactNode } from 'react';
 import { createContext, useContext, useState } from 'react';

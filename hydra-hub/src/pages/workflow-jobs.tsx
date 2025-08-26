@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RefreshCw, Play, Clock, CheckCircle, XCircle, BarChart3 } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { StatCard } from '@/components/stat-card';
+import { RunWorkflowDialog } from '@/components/run-workflow-dialog';
+import { useRouter } from 'next/router';
 
 // Enhanced job data with flow info and latest log
 export interface EnhancedFlowRun extends FlowRun {
@@ -19,6 +21,8 @@ export interface EnhancedFlowRun extends FlowRun {
 export default function WorkflowJobs() {
   const [refreshing, setRefreshing] = useState(false);
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const [runDialogOpen, setRunDialogOpen] = useState(false);
 
   // Fetch flow runs with React Query - auto-refetch every 3 seconds
   const { data: flowRuns, isLoading: flowRunsLoading, refetch } = useQuery({
@@ -105,10 +109,16 @@ export default function WorkflowJobs() {
         title="Workflow Jobs"
         description="Monitor and manage your Prefect workflow executions"
         right={(
-          <Button onClick={refreshData} disabled={refreshing || isLoading} className="flex items-center gap-2">
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setRunDialogOpen(true)} className="flex items-center gap-2">
+              <Play className="h-4 w-4" />
+              Run Workflow
+            </Button>
+            <Button onClick={refreshData} disabled={refreshing || isLoading} variant="secondary" className="flex items-center gap-2">
+              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         )}
       />
 
@@ -136,6 +146,15 @@ export default function WorkflowJobs() {
           />
         </CardContent>
       </Card>
+
+      <RunWorkflowDialog
+        open={runDialogOpen}
+        onOpenChange={setRunDialogOpen}
+        onSuccess={(id) => {
+          queryClient.invalidateQueries({ queryKey: ['flowRuns'] });
+          router.push(`/workflow-jobs/${id}`);
+        }}
+      />
     </div>
   );
 }

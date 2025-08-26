@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 
-import { DataAsset } from '../../generated/prisma';
+import type { DataAsset } from '@/lib/queries/data-assets/types';
 import { DataAssetsTable } from '@/components/data-assets-table';
 import { DataAssetDialog } from '@/components/data-asset-dialog';
 import { Button } from '@/components/ui/button';
@@ -123,7 +123,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
     const serializedDataAssets = dataAssets.map(asset => ({
       ...asset,
       date_created: asset.date_created.toISOString(),
-      date_updated: asset.date_updated.toISOString(),
+      date_modified: asset.date_modified.toISOString(),
     }));
 
     return {

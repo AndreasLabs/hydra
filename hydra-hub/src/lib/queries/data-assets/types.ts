@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import type { DataAsset as PrismaDataAsset, StorageType } from '@prisma/client';
-import { StorageType as PrismaStorageType } from '@prisma/client';
+
+export const ZStorageType = z.enum(['OBJECT', 'TABLE']);
+export type StorageType = z.infer<typeof ZStorageType>;
 
 export type DataAssetCreate = {
   path: string;
@@ -12,9 +13,16 @@ export type DataAssetCreate = {
 
 export type DataAssetUpdate = Partial<DataAssetCreate>;
 
-export type DataAsset = PrismaDataAsset;
-
-export const ZStorageType = z.nativeEnum(PrismaStorageType);
+export type DataAsset = {
+  id: string;
+  path: string;
+  storage_type: StorageType;
+  storage_location: string;
+  asset_type: string;
+  owner_uuid: string;
+  date_created: Date;
+  date_modified: Date;
+};
 
 export const ZDataAssetCreate = z.object({
   path: z.string().min(1),

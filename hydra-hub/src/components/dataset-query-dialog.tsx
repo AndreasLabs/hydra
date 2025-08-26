@@ -40,7 +40,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 const queryFormSchema = z.object({
   query: z.string().min(1, 'Query is required'),
   type: z.enum(['objectstore/path', 'objectstore/object', 'objectstore/bucket']),
-  exclude: z.boolean().default(false),
+  exclude: z.boolean(),
 });
 
 type QueryFormData = z.infer<typeof queryFormSchema>;

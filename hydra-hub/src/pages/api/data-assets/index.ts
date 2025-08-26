@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { StorageType } from '../../../../generated/prisma';
+import { ZStorageType } from '@/lib/queries/data-assets/types';
 import { fetchDataAssets as getDataAssets } from '@/lib/queries/data-assets/fetch-data-assets';
 import { createDataAsset } from '@/lib/queries/data-assets/create-data-asset';
 import { ZDataAssetCreate } from '@/lib/queries/data-assets/types';
@@ -30,8 +30,8 @@ export default async function handler(
 
         const { path, storage_type, storage_location, asset_type, owner_uuid } = parsed.data;
 
-        // Extra guard to ensure generated prisma enum aligns
-        if (!Object.values(StorageType).includes(storage_type)) {
+        // Extra guard
+        if (!ZStorageType.options.includes(storage_type)) {
           logger.warn('Invalid storage_type', { storage_type });
           return res.status(400).json({ error: 'Invalid storage_type' });
         }

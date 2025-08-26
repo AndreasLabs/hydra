@@ -1,4 +1,4 @@
-import type { DataAsset } from '@prisma/client';
+import type { DataAsset } from '@/lib/queries/data-assets/types';
 import { useState, useMemo } from 'react';
 import {
   Table,
@@ -200,7 +200,7 @@ export function DataAssetsTable({ data, loading, onEdit, onDelete }: DataAssetsT
                 {formatDate(asset.date_created)}
               </TableCell>
               <TableCell className="text-sm text-muted-foreground">
-                {formatDate(asset.date_updated)}
+                {formatDate(asset.date_modified)}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-2">
