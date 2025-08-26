@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Folder, File as FileIcon, ChevronRight, ChevronDown, RefreshCcw, Search, Download, Maximize2, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
-import type { ListFileResult } from '@/lib/types/files/types-files';
+import type { ListFileResult } from '@/lib/types/types-files';
 import { CodeBlock, CodeBlockCopyButton } from "@/components/ui/shadcn-io/ai/code-block";
 
 type TreeNode = {
