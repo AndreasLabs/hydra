@@ -72,9 +72,15 @@ export default function Datasets() {
 
     try {
       setLoading(true);
-      // Note: The API doesn't currently support DELETE for datasets
-      // In a full implementation, you'd call the delete endpoint here
-      alert('Dataset deletion is not yet implemented in the API');
+      const response = await fetch(`/api/datasets/${key}`, {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        await fetchDatasets(); // Refresh the data
+      } else {
+        throw new Error('Failed to delete dataset');
+      }
     } catch (error) {
       logger.error('Failed to delete dataset', { error });
       alert('Failed to delete dataset');

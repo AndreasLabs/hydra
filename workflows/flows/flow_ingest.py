@@ -11,7 +11,6 @@ from prefect.logging import get_run_logger
 from typing import List, Optional
 
 from tasks.tasks_list_files import list_minio_objects
-from tasks.task_create_asset import create_data_asset
 from tasks.tasks_gps import extract_gps_coordinates
 
 
@@ -56,18 +55,7 @@ def ingest_flow(
             # Continue ingest even if GPS extraction fails for this object
             continue
     
-    # Create data asset for each object
-    asset_ids = []
-    for obj in objects:
-        asset_id = create_data_asset(
-            minio_objects=[obj],
-            bucket_name=bucket_name,
-            asset_type="raw_data"
-        )
-        if asset_id:
-            asset_ids.append(asset_id)
-    
-    logger.info(f"Ingest flow completed. Found {len(objects)} objects and created {len(asset_ids)} assets.")
+    logger.info(f"Ingest flow completed. Found {len(objects)} objects.")
     return [obj.object_name for obj in objects]
 
 

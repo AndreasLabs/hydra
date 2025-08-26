@@ -1,6 +1,6 @@
 import adze from 'adze';
 import { ListObjects, GetJson } from '../../clients/minio';
-import { ListFileQueryOptions, ListFileResult } from '../../types/files/types-files';
+import { ListFileQueryOptions, ListFileResult } from '../../types/types-files';
 
 const logger = adze;
 
