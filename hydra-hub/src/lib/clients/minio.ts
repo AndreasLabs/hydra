@@ -15,7 +15,8 @@ const minioClient = new Minio.Client({
 export const ListObjects = async (
   bucketName: string,
   prefix: string,
-  recursive: boolean = true
+  recursive: boolean = true,
+  filter: (item: Minio.BucketItem) => boolean = () => true
 ) => {
   // Normalize prefix to avoid leading slashes in object keys
   const normalizedPrefix = prefix.replace(/^\/+/, '');

@@ -84,14 +84,11 @@ def extract_gps_coordinates(
     
     if not df.empty:
         logger.info(f"Successfully extracted coordinates from {len(df)} images")
-        # Save per-image GPS metadata to MinIO as {dir}/.hydra/meta/gps/{original file name}.json
+        # Save per-image GPS metadata to MinIO in meta/ directory
         for _, row in df.iterrows():
             try:
-                obj_path = str(row["filename"]).strip()
-                parent_dir = os.path.dirname(obj_path).rstrip("/")
-                base_name = os.path.basename(obj_path)
-                meta_prefix = f"{parent_dir}/.hydra/meta/gps" if parent_dir else ".hydra/meta/gps"
-                json_key = f"{meta_prefix}/{base_name}.json"
+                base_name = os.path.basename(str(row["filename"]))
+                json_key = f"meta/{base_name}.gps.json"
                 # Build a single-record JSON payload for this image
                 payload = {
                     "filename": row["filename"],
