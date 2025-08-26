@@ -1,5 +1,5 @@
 import { db } from '../../clients/prisma';
-import { DataAsset } from '@prisma/client';
+import type { DataAsset } from '@/lib/queries/data-assets/types';
 
 export async function fetchDataAssets(): Promise<DataAsset[]> {
   return await db.dataAsset.findMany({

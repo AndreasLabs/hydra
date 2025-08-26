@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { StorageType } from '../../../../generated/prisma';
+import { ZStorageType } from '@/lib/queries/data-assets/types';
 import { fetchDataAssetById as getDataAssetById } from '@/lib/queries/data-assets/fetch-data-asset-by-id';
 import { updateDataAsset } from '@/lib/queries/data-assets/update-data-asset';
 import { deleteDataAsset } from '@/lib/queries/data-assets/delete-data-asset';
@@ -45,7 +45,7 @@ export default async function handler(
         }
 
         const { storage_type } = parsed.data;
-        if (storage_type !== undefined && !Object.values(StorageType).includes(storage_type)) {
+        if (storage_type !== undefined && !ZStorageType.options.includes(storage_type)) {
           logger.warn('Invalid storage_type on update', { storage_type });
           return res.status(400).json({ error: 'Invalid storage_type' });
         }

@@ -1,15 +1,9 @@
 import { db } from '../../clients/prisma';
-import { DataAsset, StorageType } from '@prisma/client';
+import type { DataAsset, DataAssetUpdate } from '@/lib/queries/data-assets/types';
 
 export async function updateDataAsset(
   id: string,
-  data: {
-    path?: string;
-    storage_type?: StorageType;
-    storage_location?: string;
-    asset_type?: string;
-    owner_uuid?: string;
-  }
+  data: DataAssetUpdate
 ): Promise<DataAsset> {
   return await db.dataAsset.update({
     where: { id },

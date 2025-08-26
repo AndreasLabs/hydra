@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { prefectClient } from '../../clients/prefect';
-import type { FlowRun, Deployment, FlowRunsFilterRequest, DeploymentsFilterRequest } from '../../clients/prefect';
+import { prefectClient } from '@/lib/clients/prefect';
+import type { FlowRun, Deployment, FlowRunsFilterRequest, DeploymentsFilterRequest } from '@/lib/clients/prefect';
 
 interface UseQueryResult<T> {
   data: T | null;
