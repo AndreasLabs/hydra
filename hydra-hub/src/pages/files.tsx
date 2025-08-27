@@ -135,10 +135,7 @@ const [previewError, setPreviewError] = useState<string | null>(null);
       />
 
       <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>Filters</CardTitle>
-          <CardDescription>Set the path prefix and optional name filter</CardDescription>
-        </CardHeader>
+       
         <CardContent>
           <div className="grid gap-3 md:grid-cols-12">
             <div className="md:col-span-5">
@@ -190,12 +187,7 @@ const [previewError, setPreviewError] = useState<string | null>(null);
         </div>
         <div className="md:col-span-7 lg:col-span-8">
           <Card className="h-[70vh] flex flex-col">
-            <CardHeader>
-              <CardTitle>Preview</CardTitle>
-              <CardDescription>
-                {selectedPath ? selectedPath : 'Select a file to preview'}
-              </CardDescription>
-            </CardHeader>
+           
             <CardContent className="flex-1 overflow-auto">
               {!selectedPath ? (
                 <div className="text-muted-foreground">No file selected</div>
@@ -649,7 +641,7 @@ function EptPreviewActions({ path }: { path: string }) {
   const namePart = key.split('/').slice(-3, -1).join('/') || key.split('/').slice(-2, -1).join('/') || 'Point Cloud';
   // Ensure we pass the manifest key itself to get-url (viewer will presign and normalize if needed)
   const manifestKey = key.endsWith('ept.json') ? key : `${key.replace(/\/$/, '')}/ept.json`;
-  const viewerUrl = `/point-cloud?key=${encodeURIComponent(manifestKey)}&name=${encodeURIComponent(namePart)}`;
+  const viewerUrl = `/point-cloud?key=${encodeURIComponent(manifestKey)}&name=${encodeURIComponent(namePart)}&fullscreen=1`;
   return (
     <div className="flex items-center justify-between">
       <div className="text-sm text-muted-foreground">Entwine Point Tiles manifest detected</div>
@@ -664,7 +656,7 @@ function EptEmbeddedViewer({ path }: { path: string }) {
   const key = path.startsWith('/') ? path.slice(1) : path;
   const namePart = key.split('/').slice(-3, -1).join('/') || key.split('/').slice(-2, -1).join('/') || 'Point Cloud';
   const manifestKey = key.endsWith('ept.json') ? key : `${key.replace(/\/$/, '')}/ept.json`;
-  const src = `/point-cloud?key=${encodeURIComponent(manifestKey)}&name=${encodeURIComponent(namePart)}`;
+  const src = `/point-cloud?key=${encodeURIComponent(manifestKey)}&name=${encodeURIComponent(namePart)}&fullscreen=1`;
   return (
     <div className="w-full h-[60vh]">
       <iframe

@@ -22,6 +22,7 @@ export default function PointCloudPage() {
   const [scriptsLoaded, setScriptsLoaded] = useState(false);
   const [eptUrl, setEptUrl] = useState<string | null>(null);
   const [cloudName, setCloudName] = useState<string>("Point Cloud");
+  const [hideChrome, setHideChrome] = useState<boolean>(false);
   const viewerContainerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<any>(null);
 
@@ -67,6 +68,14 @@ export default function PointCloudPage() {
       const keyParam = params.get("key");
       const pathParam = params.get("path");
       const nameParam = params.get("name");
+      const fullscreenParam = params.get("fullscreen");
+
+      // If fullscreen query is present and truthy, hide app chrome and expand viewer
+      if (fullscreenParam !== null) {
+        const wantsFullscreen = fullscreenParam === "" || /^(1|true|yes)$/i.test(fullscreenParam);
+        setHideChrome(wantsFullscreen);
+        setIsFullscreen(wantsFullscreen);
+      }
 
       if (nameParam && nameParam.trim().length > 0) {
         setCloudName(nameParam.trim());
@@ -202,16 +211,24 @@ export default function PointCloudPage() {
 
 
   const toggleFullscreen = () => {
-    if (!viewerContainerRef.current) return;
-    
-    if (!isFullscreen) {
-      if (viewerContainerRef.current.requestFullscreen) {
-        viewerContainerRef.current.requestFullscreen();
+    const container = viewerContainerRef.current;
+    if (!container || typeof document === 'undefined') return;
+
+    try {
+      const isDocFullscreen = Boolean(document.fullscreenElement);
+      if (!isDocFullscreen) {
+        // Only attempt request if API is available
+        if (container.requestFullscreen) {
+          container.requestFullscreen().catch(() => {});
+        }
+      } else {
+        // Exit only if document is actually in fullscreen
+        if (document.exitFullscreen && document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        }
       }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
+    } catch (err) {
+      console.warn('Fullscreen toggle failed:', err);
     }
   };
 
@@ -306,121 +323,180 @@ export default function PointCloudPage() {
         }
       `}</style>
       
-      <AppShell>
-        <div className="container flex-1 space-y-6 p-4 md:p-8 lg:p-10">
-          <Card className="relative flex-1 overflow-hidden">
-            <div 
-              ref={viewerContainerRef}
-              className={cn(
-                "w-full bg-black/10 dark:bg-white/5 transition-all duration-200 potree_container relative",
-                isFullscreen ? "h-screen" : "h-[70vh]"
-              )}
+      {hideChrome ? (
+        <div className="fixed inset-0">
+          <div
+            ref={viewerContainerRef}
+            className={cn(
+              "w-full h-full bg-black/10 dark:bg-white/5 transition-all duration-200 potree_container relative"
+            )}
+          >
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-2">
+                  <Loader className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">Loading point cloud viewer...</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="pointer-events-auto absolute top-4 right-4 z-20 flex gap-2">
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={toggleFullscreen}
+              title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
             >
-              {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <Loader className="h-8 w-8 animate-spin text-primary" />
-                    <p className="text-sm text-muted-foreground">Loading point cloud viewer...</p>
-                  </div>
-                </div>
+              {isFullscreen ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
               )}
-            </div>
-
-            <div className="pointer-events-auto absolute top-4 right-4 z-20 flex gap-2">
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={toggleFullscreen}
-                title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-              >
-                {isFullscreen ? (
-                  <Minimize2 className="h-4 w-4" />
-                ) : (
-                  <Maximize2 className="h-4 w-4" />
-                )}
-              </Button>
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={handleZoomIn}
-                title="Zoom in"
-              >
-                <ZoomIn className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={handleZoomOut}
-                title="Zoom out"
-              >
-                <ZoomOut className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={handleReset}
-                title="Reset view"
-              >
-                <RotateCw className="h-4 w-4" />
-              </Button>
-            </div>
-          </Card>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card className="p-6">
-              <h3 className="text-lg font-medium mb-2">About This Point Cloud</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                This point cloud was generated using OpenDroneMap (ODM) from aerial imagery.
-                The data is stored in Entwine Point Tile (EPT) format, which allows for efficient
-                streaming and visualization of large point clouds.
-              </p>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="font-medium">Total Points</p>
-                  <p className="text-muted-foreground">676,892</p>
-                </div>
-                <div>
-                  <p className="font-medium">Coordinate System</p>
-                  <p className="text-muted-foreground">EPSG:32610 (UTM Zone 10N)</p>
-                </div>
-                <div>
-                  <p className="font-medium">Point Density</p>
-                  <p className="text-muted-foreground">~100 points/m²</p>
-                </div>
-                <div>
-                  <p className="font-medium">RGB Coloring</p>
-                  <p className="text-muted-foreground">Available</p>
-                </div>
-              </div>
-            </Card>
-            <Card className="p-6">
-              <h3 className="text-lg font-medium mb-2">Navigation Controls</h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="font-medium">Orbit</span>
-                  <span className="text-muted-foreground">Left mouse button</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Pan</span>
-                  <span className="text-muted-foreground">Right mouse button</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Zoom</span>
-                  <span className="text-muted-foreground">Mouse wheel</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Focus point</span>
-                  <span className="text-muted-foreground">Double click</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">First person mode</span>
-                  <span className="text-muted-foreground">F key</span>
-                </div>
-              </div>
-            </Card>
+            </Button>
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={handleZoomIn}
+              title="Zoom in"
+            >
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={handleZoomOut}
+              title="Zoom out"
+            >
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={handleReset}
+              title="Reset view"
+            >
+              <RotateCw className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-      </AppShell>
+      ) : (
+        
+          <div className="container flex-1 space-y-6 p-4 md:p-8 lg:p-10">
+            <Card className="relative flex-1 overflow-hidden">
+              <div
+                ref={viewerContainerRef}
+                className={cn(
+                  "w-full bg-black/10 dark:bg-white/5 transition-all duration-200 potree_container relative",
+                  isFullscreen ? "h-screen" : "h-[70vh]"
+                )}
+              >
+                {isLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader className="h-8 w-8 animate-spin text-primary" />
+                      <p className="text-sm text-muted-foreground">Loading point cloud viewer...</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="pointer-events-auto absolute top-4 right-4 z-20 flex gap-2">
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  onClick={toggleFullscreen}
+                  title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                >
+                  {isFullscreen ? (
+                    <Minimize2 className="h-4 w-4" />
+                  ) : (
+                    <Maximize2 className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  onClick={handleZoomIn}
+                  title="Zoom in"
+                >
+                  <ZoomIn className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  onClick={handleZoomOut}
+                  title="Zoom out"
+                >
+                  <ZoomOut className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  onClick={handleReset}
+                  title="Reset view"
+                >
+                  <RotateCw className="h-4 w-4" />
+                </Button>
+              </div>
+            </Card>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card className="p-6">
+                <h3 className="text-lg font-medium mb-2">About This Point Cloud</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  This point cloud was generated using OpenDroneMap (ODM) from aerial imagery.
+                  The data is stored in Entwine Point Tile (EPT) format, which allows for efficient
+                  streaming and visualization of large point clouds.
+                </p>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="font-medium">Total Points</p>
+                    <p className="text-muted-foreground">676,892</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Coordinate System</p>
+                    <p className="text-muted-foreground">EPSG:32610 (UTM Zone 10N)</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Point Density</p>
+                    <p className="text-muted-foreground">~100 points/m²</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">RGB Coloring</p>
+                    <p className="text-muted-foreground">Available</p>
+                  </div>
+                </div>
+              </Card>
+              <Card className="p-6">
+                <h3 className="text-lg font-medium mb-2">Navigation Controls</h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="font-medium">Orbit</span>
+                    <span className="text-muted-foreground">Left mouse button</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">Pan</span>
+                    <span className="text-muted-foreground">Right mouse button</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">Zoom</span>
+                    <span className="text-muted-foreground">Mouse wheel</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">Focus point</span>
+                    <span className="text-muted-foreground">Double click</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">First person mode</span>
+                    <span className="text-muted-foreground">F key</span>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </div>
+        
+      )}
     </>
   );
 }

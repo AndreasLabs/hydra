@@ -4,10 +4,9 @@ import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/router"
 import { Button } from "@/components/ui/button"
-import { ModeToggle } from "@/components/mode-toggle"
 import { cn } from "@/lib/utils"
 import { appNavigation } from "@/config/navigation"
-import { Menu, X } from "lucide-react"
+import { X } from "lucide-react"
 
 export interface AppShellProps {
   children: React.ReactNode
@@ -44,9 +43,6 @@ export function AppShell({ children }: AppShellProps) {
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
 
-  const currentTitle =
-    appNavigation.find((item) => item.href === router.pathname)?.name || "Home"
-
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile sidebar */}
@@ -75,29 +71,6 @@ export function AppShell({ children }: AppShellProps) {
 
       {/* Main content */}
       <div className="lg:pl-64">
-        {/* Top bar */}
-        <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="flex h-14 items-center justify-between px-4 lg:px-6">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="lg:hidden"
-                onClick={() => setSidebarOpen(true)}
-              >
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Open sidebar</span>
-              </Button>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg font-semibold">{currentTitle}</h1>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <ModeToggle />
-            </div>
-          </div>
-        </header>
-
         <main className="flex-1">{children}</main>
       </div>
     </div>
