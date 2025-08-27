@@ -45,7 +45,7 @@ export function AppShell({ children }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
 
   const currentTitle =
-    appNavigation.find((item) => item.href === router.pathname)?.name || "Dashboard"
+    appNavigation.find((item) => item.href === router.pathname)?.name || "Home"
 
   return (
     <div className="min-h-screen bg-background">
