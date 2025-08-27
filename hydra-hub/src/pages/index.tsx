@@ -1,6 +1,7 @@
-import Image from "next/image";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ModeToggle } from "@/components/mode-toggle";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,120 +13,112 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+type Stats = { fileCount: number; totalSize: number };
+
+function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB", "PB"];
+  const idx = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const value = bytes / Math.pow(1024, idx);
+  return `${value.toFixed(value >= 100 || value % 1 === 0 ? 0 : 1)} ${units[idx]}`;
+}
+
 export default function Home() {
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch(`/api/stats`);
+      if (!res.ok) throw new Error(`Failed to load stats (${res.status})`);
+      const data = (await res.json()) as Stats;
+      setStats(data);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to load stats');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const cards = useMemo(() => (
+    <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <Card>
+        <CardHeader>
+          <CardTitle>Total Files</CardTitle>
+          <CardDescription>Total number of objects in storage</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="h-8 w-24 animate-pulse rounded-md bg-muted" />
+          ) : (
+            <div className="text-3xl font-semibold">{stats?.fileCount ?? 0}</div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Total Size</CardTitle>
+          <CardDescription>Sum of object sizes</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="h-8 w-28 animate-pulse rounded-md bg-muted" />
+          ) : (
+            <div className="text-3xl font-semibold">{formatBytes(stats?.totalSize ?? 0)}</div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Refresh</CardTitle>
+          <CardDescription>Fetch latest statistics</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button onClick={load} disabled={loading}>
+            {loading ? 'Refreshing…' : 'Refresh'}
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  ), [loading, stats, load]);
+
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 bg-background text-foreground`}
-    >
-      {/* Theme toggle in top right */}
-      <div className="absolute top-4 right-4">
-        <ModeToggle />
-      </div>
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/pages/index.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="/dashboard"
-          >
-            <Image
-              className="dark:invert"
-              src="/next.svg"
-              alt="Dashboard"
-              width={20}
-              height={20}
-            />
-            Go to Dashboard
-          </a>
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="/workflow-jobs"
-          >
-            <Image
-              className="dark:invert"
-              src="/next.svg"
-              alt="Workflow Jobs"
-              width={20}
-              height={20}
-            />
-            Workflow Jobs
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className={`${geistSans.className} ${geistMono.className} font-sans`}>
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-10 sm:gap-10 sm:px-8">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Hydra Home</h1>
+          <p className="text-muted-foreground mt-1">Generic storage statistics from MinIO</p>
+        </div>
+
+        {error ? (
+          <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+            {error}
+          </div>
+        ) : null}
+
+        {cards}
+
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Button asChild variant="secondary">
+            <a href="/files">Browse Files</a>
+          </Button>
+          <Button asChild variant="secondary">
+            <a href="/datasets">View Datasets</a>
+          </Button>
+          <Button asChild variant="secondary">
+            <a href="/workflow-jobs">Workflow Jobs</a>
+          </Button>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
